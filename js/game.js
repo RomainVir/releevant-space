@@ -17,7 +17,7 @@
  function preload() {
    this.load.image("sky", "assets/backgrounds/blue.png");
    this.load.image("player", "assets/characters/player.png");
-   this.load.image("enemy", "assets/characters/alien3.png");
+   this.load.image("enemy", "assets/characters/alien1.png");
  }
  
  /**
@@ -65,9 +65,9 @@
  
  function moverPlayer() {
    if (cursors.left.isDown) {
-     let xPlayer = player.x-PLAYER_VELOCITY;
-     if (xPlayer<(player.width/2)*PLAYER_SCALE){
-       xPlayer=(player.width/2)*PLAYER_SCALE;
+     let xPlayer = player.x - PLAYER_VELOCITY;
+     if (xPlayer<(player.width/2) * PLAYER_SCALE){
+       xPlayer=(player.width/2) * PLAYER_SCALE;
      }
      player.setX(xPlayer);
    }
@@ -79,16 +79,16 @@
      player.setX(xPlayer);
    }
    if(cursors.up.isDown){
-     let yPlayer = player.y-PLAYER_VELOCITY;
-     if (yPlayer<(player.height/2)*PLAYER_SCALE){
-       yPlayer=(player.height/2)*PLAYER_SCALE;
+     let yPlayer = player.y - PLAYER_VELOCITY;
+     if (yPlayer < (player.height / 2 ) * PLAYER_SCALE){
+       yPlayer = (player.height / 2 ) * PLAYER_SCALE;
      }
      player.setY(yPlayer);
    }
    else if(cursors.down.isDown){
      let yPlayer = player.y+PLAYER_VELOCITY;
-     if (yPlayer>SCREEN_HEIGHT-(player.height/2)*PLAYER_SCALE){
-       yPlayer=SCREEN_HEIGHT-(player.height/2)*PLAYER_SCALE;
+     if (yPlayer > SCREEN_HEIGHT-(player.height / 2) * PLAYER_SCALE){
+       yPlayer = SCREEN_HEIGHT-(player.height / 2) * PLAYER_SCALE;
      }
      player.setY(yPlayer);
    }
@@ -110,7 +110,7 @@
      if(spaceBar.isDown){
        bullet.push(engine.add.ellipse(player.x, player.y - player.height / 2*PLAYER_SCALE,5,10,0xF2CB30))
        contBullet++;
-       frame = 10;
+       frame = 15;
      }
    }
  
