@@ -1,15 +1,15 @@
 /**
  * Variables used during the game.
  */
+ let background;
+ let backgroundDos;
  let player;
  let enemy;
  let cursors;
- let background1;
- let background2;
  let spaceBar;
- let bullet=[];
- let contBullet=0;
- let frame=-1;
+ let bullets = [];
+ let elapsedFrames;
+ let explosion;
  
  /**
   * It prelaods all the assets required in the game.
@@ -18,6 +18,7 @@
    this.load.image("sky", "assets/backgrounds/blue.png");
    this.load.image("player", "assets/characters/player.png");
    this.load.image("enemy", "assets/characters/alien1.png");
+   this.load.image("red", "assets/particles/fuego.png");
  }
  
  /**
@@ -25,100 +26,152 @@
   */
  function create() {
    // scene background
-   background1 = this.add.image(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, "sky");
-   background2 = this.add.image(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2-background1.height, "sky");
+   background = this.add.image(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, "sky");
+   backgroundDos = this.add.image(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - background.height, "sky")
  
    // playet setup
    player = this.add.image(SCREEN_WIDTH / 2, SCREEN_HEIGHT, "player");
    player.setX((SCREEN_WIDTH - player.width * PLAYER_SCALE) / 2);
-   player.setY(SCREEN_HEIGHT - (player.height * PLAYER_SCALE) / 2);
+   player.setY(SCREEN_HEIGHT - (player.height * PLAYER_SCALE) / 1.5);
    player.setScale(PLAYER_SCALE);
  
    // enemy setup
    enemy = this.add.image(SCREEN_WIDTH / 2, SCREEN_HEIGHT, "enemy");
    enemy.setX((SCREEN_WIDTH - enemy.width * ENEMY_SCALE) / 2);
-   enemy.setY((enemy.height * ENEMY_SCALE) / 2);
+   enemy.setY((enemy.height * ENEMY_SCALE) / 1.5);
    enemy.setScale(ENEMY_SCALE);
  
    //cursors map into game engine
    cursors = this.input.keyboard.createCursorKeys();
+ 
+   // map space key status
+   spaceBar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+ 
+   elapsedFrames = FRAMES_PER_BULLET;
+ 
+   explosion = this.add.particles("red").createEmitter({
+     scale: { min: 0.5, max: 0 },
+     speed: { min: 0, max: 10 },
+     quantity: 10,
+     frequency: 0.1,
+     lifespan: 200,
+     gravityY: 10,
+     on: false,
+   });
    
-   //map space key status
-   spaceBar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE)
  }
  
  /**
   * Updates each game object of the scene.
   */
- function update(){
-   this.add.ellipse(player.x,player.y-player.height/2*PLAYER_SCALE,180,200)
-   moverPlayer();
+ function update() {
+
+   checkEnemyCollisions();
    moverFondo();
-   if(frame<0){
-     disparar(this);
+   moverPlayer();
+   moverBalas();
+   disparar(this);
+ 
+   elapsedFrames--;
+ }
+ 
+ function moverFondo() {
+   background.setY(background.y + BACKGROUND_VELOCITY);
+   backgroundDos.setY(backgroundDos.y + BACKGROUND_VELOCITY);
+ 
+   if (background.y > background.height + SCREEN_HEIGHT / 2) {
+     background.setY(backgroundDos.y - background.height);
+ 
+     let temporal = background;
+     background = backgroundDos;
+     backgroundDos = temporal;
    }
-   if (contBullet>0){
-   moverBala();
-   }
-   frame --;
  }
  
  function moverPlayer() {
    if (cursors.left.isDown) {
-     let xPlayer = player.x - PLAYER_VELOCITY;
-     if (xPlayer<(player.width/2) * PLAYER_SCALE){
-       xPlayer=(player.width/2) * PLAYER_SCALE;
+     let x = player.x - PLAYER_VELOCITY;
+     
+     if (x  < (player.width / 2) * PLAYER_SCALE) {
+       x = player.width / 2 * PLAYER_SCALE;
      }
-     player.setX(xPlayer);
+     
+     player.setX(x);
+   } else if (cursors.right.isDown) {
+     let x = player.x + PLAYER_VELOCITY;
+     
+     if (x  > SCREEN_WIDTH - (player.width / 2) * PLAYER_SCALE) {
+       x = SCREEN_WIDTH - player.width / 2 * PLAYER_SCALE;
+     }
+     
+     player.setX(x);
    }
-   else if(cursors.right.isDown){
-     let xPlayer = player.x + PLAYER_VELOCITY;
-     if (xPlayer>SCREEN_WIDTH - (player.width/2) * PLAYER_SCALE){
-       xPlayer=SCREEN_WIDTH - (player.width/2) * PLAYER_SCALE;
+ 
+   if (cursors.up.isDown) {
+     let y = player.y - PLAYER_VELOCITY;
+     
+     if (y  < (player.height / 2) * PLAYER_SCALE) {
+       y = player.height / 2 * PLAYER_SCALE;
      }
-     player.setX(xPlayer);
-   }
-   if(cursors.up.isDown){
-     let yPlayer = player.y - PLAYER_VELOCITY;
-     if (yPlayer < (player.height / 2 ) * PLAYER_SCALE){
-       yPlayer = (player.height / 2 ) * PLAYER_SCALE;
+     
+     player.setY(y);
+   } else if (cursors.down.isDown) {
+     let y = player.y + PLAYER_VELOCITY;
+     
+     if (y  > SCREEN_HEIGHT - (player.height / 2) * PLAYER_SCALE) {
+       y = SCREEN_HEIGHT - player.height / 2 * PLAYER_SCALE;
      }
-     player.setY(yPlayer);
-   }
-   else if(cursors.down.isDown){
-     let yPlayer = player.y+PLAYER_VELOCITY;
-     if (yPlayer > SCREEN_HEIGHT-(player.height / 2) * PLAYER_SCALE){
-       yPlayer = SCREEN_HEIGHT-(player.height / 2) * PLAYER_SCALE;
-     }
-     player.setY(yPlayer);
+     
+     player.setY(y);
    }
  }
  
- function moverFondo(){
-   background1.setY(background1.y+BACKGROUND_VELOCITY);
-   background2.setY(background2.y+BACKGROUND_VELOCITY);
-     
-     if (background1.y>background1.height+SCREEN_HEIGHT/2){
-       background1.setY(background2.y-background1.height)
-       let temp = background1;
-       background1 = background2;
-       background2 = temp;
-     }
-   }
+ function moverBalas() {
+   let index = 0;
  
-   function disparar(engine){
-     if(spaceBar.isDown){
-       bullet.push(engine.add.ellipse(player.x, player.y - player.height / 2*PLAYER_SCALE,5,10,0xF2CB30))
-       contBullet++;
-       frame = 15;
-     }
-   }
+   while (index < bullets.length) {
+     bullets[index].setY(bullets[index].y - BULLET_VELOCITY);
  
-   function moverBala(){
-     for (let bala of bullet){
-       bala.setY(bala.y - BULLET_VELOCITY)
-       if(bala.y < 0 - bala.height){
-        bala.destroy();
+     if (bullets[index].y < 0) {
+       destroyBullet(index);
+     } else {
+       const enemyHalfWidth = enemy.width / 2 * ENEMY_SCALE;
+       const enemyHalfHeight = enemy.height / 2 * ENEMY_SCALE;
+ 
+       if ((bullets[index].x > (enemy.x - enemyHalfWidth) && bullets[index].x < (enemy.x + enemyHalfWidth)) 
+           && (bullets[index].y < (enemy.y + enemyHalfHeight) && (bullets[index].y > (enemy.y - enemyHalfHeight)))){
+         explosion.setPosition(enemy.x, enemy.y);
+         explosion.explode();
+ 
+         enemy.destroy();
+         destroyBullet(index);
+       } else {
+         index++;
        }
      }
    }
+ }
+ 
+ function disparar(engine) {
+   if (spaceBar.isDown && elapsedFrames < 0) {
+     bullets.push(engine.add.ellipse(player.x, player.y - player.height / 2 * PLAYER_SCALE - 1 , 10, 10, 0xedd221));
+ 
+     elapsedFrames = FRAMES_PER_BULLET;
+   }
+ }
+ 
+ function checkEnemyCollisions() {
+   for (const b of bullets) {
+     const enemyHalfWidth = enemy.width / 2 * ENEMY_SCALE;
+     const enemyHalfHeight = enemy.height / 2 * ENEMY_SCALE;
+ 
+     if ((b.x > (enemy.x - enemyHalfWidth) && b.x < (enemy.x + enemyHalfWidth)) && (b.y < (enemy.y + enemyHalfHeight) && (b.y > (enemy.y - enemyHalfHeight)))){
+       enemy.destroy();
+     }
+   }
+ }
+ 
+ function destroyBullet(index) {
+   bullets[index].destroy();
+   bullets.splice(index, 1);
+ }
